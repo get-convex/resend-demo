@@ -14,6 +14,8 @@ This is a [Convex](https://convex.dev/) project created with [`npm create convex
   - Rate limiting: Honors API rate limits established by Resend.
 - [Convex Auth](https://labs.convex.dev/auth/) for authentication.
 
+![Screenshot](./screenshot.png)
+
 ## Get started
 
 ```
