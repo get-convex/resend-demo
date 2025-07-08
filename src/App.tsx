@@ -14,13 +14,13 @@ import { useState } from "react";
 export default function App() {
   return (
     <>
-      <header className="sticky top-0 z-10 bg-light dark:bg-dark p-4 border-b-2 border-slate-200 dark:border-slate-800">
-        Convex + React + Convex Auth
+      <header className="sticky top-0 z-10 bg-light dark:bg-dark p-4 border-b-2 border-slate-200 dark:border-slate-800 flex justify-between items-center">
+        <span className="text-xl font-semibold">📧 Resend Email Testing</span>
         <SignOutButton />
       </header>
       <main className="p-8 flex flex-col gap-16">
         <h1 className="text-4xl font-bold text-center">
-          Convex + React + Convex Auth
+          Test Email Delivery with Resend
         </h1>
         <Authenticated>
           <Content />
@@ -56,7 +56,6 @@ function SignInForm() {
   const [error, setError] = useState<string | null>(null);
   return (
     <div className="flex flex-col gap-8 w-96 mx-auto">
-      <p>Log in to see the numbers</p>
       <form
         className="flex flex-col gap-2"
         onSubmit={(e) => {
@@ -73,6 +72,12 @@ function SignInForm() {
           type="email"
           name="email"
           placeholder="Email"
+        />
+        <input
+          className="bg-light dark:bg-dark text-dark dark:text-light rounded-md p-2 border-2 border-slate-200 dark:border-slate-800"
+          type="text"
+          name="name"
+          placeholder="Name"
         />
         <input
           className="bg-light dark:bg-dark text-dark dark:text-light rounded-md p-2 border-2 border-slate-200 dark:border-slate-800"
@@ -112,59 +117,159 @@ function SignInForm() {
 }
 
 function Content() {
-  const { viewer, numbers } =
-    useQuery(api.myFunctions.listNumbers, {
-      count: 10,
-    }) ?? {};
-  const addNumber = useMutation(api.myFunctions.addNumber);
+  const emails = useQuery(api.emails.listMyEmailsAndStatuses);
+  const sendEmail = useMutation(api.emails.sendEmail);
+  const [selectedRecipient, setSelectedRecipient] = useState<string>("");
+  const [subject, setSubject] = useState("");
+  const [message, setMessage] = useState("");
+  const [isSending, setIsSending] = useState(false);
 
-  if (viewer === undefined || numbers === undefined) {
-    return (
-      <div className="mx-auto">
-        <p>loading... (consider a loading skeleton)</p>
-      </div>
-    );
-  }
+  const testEmails = [
+    "delivered@resend.dev",
+    "bounced@resend.dev",
+    "complained@resend.dev",
+  ];
+
+  const handleSendEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedRecipient || !subject || !message) {
+      alert("Please fill in all fields and select a recipient");
+      return;
+    }
+
+    setIsSending(true);
+    try {
+      await sendEmail({
+        to: selectedRecipient,
+        subject: subject,
+        body: message,
+      });
+      // Reset form
+      setSelectedRecipient("");
+      setSubject("");
+      setMessage("");
+      alert("Email sent successfully!");
+    } catch (error) {
+      console.error("Error sending email:", error);
+      alert("Error sending email. Please try again.");
+    } finally {
+      setIsSending(false);
+    }
+  };
 
   return (
-    <div className="flex flex-col gap-8 max-w-lg mx-auto">
-      <p>Welcome {viewer ?? "Anonymous"}!</p>
-      <p>
-        Click the button below and open this page in another window - this data
-        is persisted in the Convex cloud database!
-      </p>
-      <p>
-        <button
-          className="bg-dark dark:bg-light text-light dark:text-dark text-sm px-4 py-2 rounded-md border-2"
-          onClick={() => {
-            void addNumber({ value: Math.floor(Math.random() * 10) });
-          }}
+    <div className="flex flex-col gap-8">
+      {/* Email List Section */}
+      <div className="flex flex-col gap-4">
+        <h2 className="text-2xl font-bold">Email History</h2>
+        <div className="flex flex-col gap-2">
+          {emails === undefined ? (
+            <p>Loading emails...</p>
+          ) : emails.length === 0 ? (
+            <p className="text-gray-500">No emails sent yet.</p>
+          ) : (
+            emails.map((email) => (
+              <div
+                key={email.emailId}
+                className="flex flex-col gap-2 bg-slate-100 dark:bg-slate-800 p-4 rounded-lg border"
+              >
+                <div className="flex justify-between items-start">
+                  <div className="flex flex-col gap-1">
+                    <p className="font-semibold">
+                      {email.subject || "No subject"}
+                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      To: {email.to}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Sent: {new Date(email.sentAt).toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="flex flex-col items-end gap-1">
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        email.status.status === "delivered"
+                          ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                          : email.status.status === "bounced"
+                            ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                            : email.status.complained
+                              ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                              : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
+                      }`}
+                    >
+                      {email.status.status || "unknown"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Send Email Form */}
+      <div className="flex flex-col gap-4">
+        <h2 className="text-2xl font-bold">Send Test Email</h2>
+        <form
+          onSubmit={(e) => void handleSendEmail(e)}
+          className="flex flex-col gap-4"
         >
-          Add a random number
-        </button>
-      </p>
-      <p>
-        Numbers:{" "}
-        {numbers?.length === 0
-          ? "Click the button!"
-          : (numbers?.join(", ") ?? "...")}
-      </p>
-      <p>
-        Edit{" "}
-        <code className="text-sm font-bold font-mono bg-slate-200 dark:bg-slate-800 px-1 py-0.5 rounded-md">
-          convex/myFunctions.ts
-        </code>{" "}
-        to change your backend
-      </p>
-      <p>
-        Edit{" "}
-        <code className="text-sm font-bold font-mono bg-slate-200 dark:bg-slate-800 px-1 py-0.5 rounded-md">
-          src/App.tsx
-        </code>{" "}
-        to change your frontend
-      </p>
-      <div className="flex flex-col">
-        <p className="text-lg font-bold">Useful resources:</p>
+          <div className="flex flex-col gap-2">
+            <label className="font-semibold">Recipient (Test Address):</label>
+            <div className="flex flex-col gap-2">
+              {testEmails.map((email) => (
+                <label key={email} className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    checked={selectedRecipient === email}
+                    onChange={() => setSelectedRecipient(email)}
+                    className="w-4 h-4"
+                  />
+                  <span className="text-sm">{email}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="font-semibold">Subject:</label>
+            <input
+              type="text"
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              placeholder="Enter email subject"
+              className="bg-light dark:bg-dark text-dark dark:text-light rounded-md p-2 border-2 border-slate-200 dark:border-slate-800"
+              required
+            />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="font-semibold">Message:</label>
+            <textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Enter your message"
+              rows={4}
+              className="bg-light dark:bg-dark text-dark dark:text-light rounded-md p-2 border-2 border-slate-200 dark:border-slate-800"
+              required
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={isSending}
+            className={`bg-dark dark:bg-light text-light dark:text-dark rounded-md p-2 font-semibold ${
+              isSending ? "opacity-50 cursor-not-allowed" : "hover:opacity-80"
+            }`}
+          >
+            {isSending ? "Sending..." : "Send Email"}
+          </button>
+        </form>
+      </div>
+
+      {/* Resources Section */}
+      <div className="flex flex-col gap-4">
+        <h2 className="text-2xl font-bold">Useful Resources</h2>
         <div className="flex gap-2">
           <div className="flex flex-col gap-2 w-1/2">
             <ResourceCard
@@ -173,23 +278,21 @@ function Content() {
               href="https://docs.convex.dev/home"
             />
             <ResourceCard
-              title="Stack articles"
-              description="Learn about best practices, use cases, and more from a growing
-            collection of articles, videos, and walkthroughs."
-              href="https://www.typescriptlang.org/docs/handbook/2/basic-types.html"
+              title="Resend"
+              description="Resend is a modern email service that provides a simple API for sending emails."
+              href="https://resend.com/"
             />
           </div>
           <div className="flex flex-col gap-2 w-1/2">
             <ResourceCard
-              title="Templates"
-              description="Browse our collection of templates to get started quickly."
-              href="https://www.convex.dev/templates"
+              title="Convex Auth"
+              description="Convex Auth is a modern authentication library for Convex."
+              href="https://labs.convex.dev/auth/"
             />
             <ResourceCard
-              title="Discord"
-              description="Join our developer community to ask questions, trade tips & tricks,
-            and show off your projects."
-              href="https://www.convex.dev/community"
+              title="Resend Component"
+              description="Resend Component is a modern email component for Convex."
+              href="https://labs.convex.dev/components/resend"
             />
           </div>
         </div>

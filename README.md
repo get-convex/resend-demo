@@ -21,6 +21,28 @@ npm install
 npm run dev
 ```
 
+Set up Convex Auth:
+```
+npx @convex-dev/auth
+```
+
+Follow the [Resend Component  instructions](https://docs.convex.dev/components/resend) to get started.
+
+In particular, make sure to set the environment variables:
+```
+npx convex env set RESEND_API_KEY "<your-api-key>"
+```
+Use this to make your webhook url:
+```
+npx convex env get CONVEX_SITE_URL
+```
+Set the webhook secret:
+```
+npx convex env set RESEND_WEBHOOK_SECRET "<your-webhook-secret>"
+```
+
+To log into the app, use the same email domain as you have set up in Resend.
+
 For more information on how to configure Convex Auth, check out the [Convex Auth docs](https://labs.convex.dev/auth/).
 
 For more examples of different Convex Auth flows, check out this [example repo](https://www.convex.dev/templates/convex-auth).
