@@ -394,7 +394,7 @@ function Content() {
             <ResourceCard
               title="Resend Component"
               description="Resend Component is a modern email component for Convex."
-              href="https://labs.convex.dev/components/resend"
+              href="https://www.convex.dev/components/resend"
             />
           </div>
         </div>
