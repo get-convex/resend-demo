@@ -18,16 +18,17 @@ export const sendEmail = mutation({
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("User not authenticated");
+
     const me = await ctx.db.get(userId);
     if (!me) throw new Error("User not found");
 
-    const emailId = await resend.sendEmail(
-      ctx,
-      `${me.name ?? "Me"} <${me.email}>`,
-      args.to,
-      args.subject,
-      args.body,
-    );
+    const emailId = await resend.sendEmail(ctx, {
+      from: `${me.name ?? "Me"} <${me.email}>`,
+      to: args.to,
+      subject: args.subject,
+      html: args.body,
+    });
+
     await ctx.db.insert("emails", {
       userId,
       emailId,
@@ -42,11 +43,13 @@ export const listMyEmailsAndStatuses = query({
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];
+
     const emails = await ctx.db
       .query("emails")
       .withIndex("userId", (q) => q.eq("userId", userId))
       .order("desc")
       .take(10);
+
     const emailAndStatuses = await Promise.all(
       emails.map(async (email) => {
         const status = await resend.status(ctx, email.emailId);
@@ -59,6 +62,7 @@ export const listMyEmailsAndStatuses = query({
         };
       }),
     );
+
     return emailAndStatuses;
   },
 });
