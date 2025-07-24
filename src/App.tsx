@@ -68,11 +68,14 @@ function SignInForm() {
           });
         }}
       >
+        <label htmlFor="email">
+          You must use a verified domain for your email to send correctly
+        </label>
         <input
           className="bg-light dark:bg-dark text-dark dark:text-light rounded-md p-2 border-2 border-slate-200 dark:border-slate-800"
           type="email"
           name="email"
-          placeholder="Email"
+          placeholder="email@your-verified-domain.com"
         />
         <input
           className="bg-light dark:bg-dark text-dark dark:text-light rounded-md p-2 border-2 border-slate-200 dark:border-slate-800"
@@ -216,6 +219,37 @@ function Content() {
                     </div>
                   </label>
                 ))}
+                <label
+                  key={"custom"}
+                  className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
+                    selectedRecipient === "custom"
+                      ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                      : "border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    checked={
+                      !!selectedRecipient &&
+                      !testEmails.includes(selectedRecipient)
+                    }
+                    // onChange={() => setSelectedRecipient("custom")}
+                    className="w-5 h-5 text-blue-600 focus:ring-blue-500"
+                  />
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">📧</span>
+                    <input
+                      type="text"
+                      value={selectedRecipient}
+                      onChange={(e) => setSelectedRecipient(e.target.value)}
+                      placeholder="email@your-verified-domain.com"
+                      className="w-full bg-slate-50 dark:bg-slate-700 text-slate-900 dark:text-slate-100 rounded-xl p-4 border-2 border-slate-200 dark:border-slate-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-lg"
+                    />
+                    <span className="font-medium text-slate-700 dark:text-slate-300">
+                      An email address for your verified domain on Resend
+                    </span>
+                  </div>
+                </label>
               </div>
             </div>
 
@@ -258,12 +292,20 @@ function Content() {
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={isSending}
+              disabled={isSending || !selectedRecipient || !subject || !message}
+              title={
+                !selectedRecipient || !subject || !message
+                  ? "Please fill in all fields"
+                  : ""
+              }
               className={`w-full py-4 px-6 rounded-xl font-semibold text-lg transition-all duration-200 ${
                 isSending
                   ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
-              } text-white`}
+                  : !selectedRecipient || !subject || !message
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+              } text-white
+                 `}
             >
               {isSending ? (
                 <div className="flex items-center justify-center gap-2">
@@ -337,27 +379,45 @@ function Content() {
                       <div className="flex-shrink-0">
                         <span
                           className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium ${
-                            email.status.complained
-                              ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300"
-                              : email.status.status === "delivered"
-                                ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
-                                : email.status.status === "bounced"
-                                  ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
-                                  : "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300"
+                            !email.status
+                              ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
+                              : email.status.complained
+                                ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300"
+                                : email.status.opened
+                                  ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
+                                  : email.status.errorMessage
+                                    ? "bg-purple-100 text-red-800 dark:bg-purple-900/30 dark:text-purple-300"
+                                    : email.status.status === "delivered"
+                                      ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
+                                      : email.status.status === "bounced"
+                                        ? "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
+                                        : "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300"
                           }`}
                         >
                           <span className="text-xs">
-                            {email.status.complained
-                              ? "⚠️"
-                              : email.status.status === "delivered"
-                                ? "✅"
-                                : email.status.status === "bounced"
-                                  ? "❌"
-                                  : "⏳"}
+                            {!email.status
+                              ? "🗑️"
+                              : email.status.complained
+                                ? "⚠️"
+                                : email.status.opened
+                                  ? "👀"
+                                  : email.status.errorMessage
+                                    ? "❌"
+                                    : email.status.status === "delivered"
+                                      ? "✅"
+                                      : email.status.status === "bounced"
+                                        ? "❌"
+                                        : "⏳"}
                           </span>
-                          {email.status.complained
-                            ? "delivered (but complained)"
-                            : email.status.status || "pending"}
+                          {!email.status
+                            ? "Email missing"
+                            : email.status.complained
+                              ? "delivered (but complained)"
+                              : email.status.opened
+                                ? "opened"
+                                : email.status.errorMessage
+                                  ? "error"
+                                  : email.status.status}
                         </span>
                       </div>
                     </div>
