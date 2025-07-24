@@ -31,8 +31,6 @@ export const sendEmail = mutation({
     await ctx.db.insert("emails", {
       userId,
       emailId,
-      subject: args.subject,
-      to: args.to,
     });
   },
 });
@@ -51,13 +49,16 @@ export const listMyEmailsAndStatuses = query({
 
     const emailAndStatuses = await Promise.all(
       emails.map(async (email) => {
-        const status = await resend.status(ctx, email.emailId);
+        const emailData = await resend.get(ctx, email.emailId);
         return {
           emailId: email.emailId,
           sentAt: email._creationTime,
-          to: email.to,
-          subject: email.subject,
-          status,
+          to: emailData?.to ?? "<Deleted>",
+          subject: emailData?.subject ?? "<Deleted>",
+          status: emailData?.status,
+          errorMessage: emailData?.errorMessage,
+          opened: emailData?.opened,
+          complained: emailData?.complained,
         };
       }),
     );

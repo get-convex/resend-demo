@@ -124,8 +124,8 @@ function Content() {
   const emails = useQuery(api.emails.listMyEmailsAndStatuses);
   const sendEmail = useMutation(api.emails.sendEmail);
   const [selectedRecipient, setSelectedRecipient] = useState<string>("");
-  const [subject, setSubject] = useState("");
-  const [message, setMessage] = useState("");
+  const [subject, setSubject] = useState("Hello");
+  const [message, setMessage] = useState("World");
   const [isSending, setIsSending] = useState(false);
 
   const testEmails = [
@@ -150,8 +150,6 @@ function Content() {
       });
       // Reset form
       setSelectedRecipient("");
-      setSubject("");
-      setMessage("");
     } catch (error) {
       console.error("Error sending email:", error);
       alert("Error sending email. Please try again.");
@@ -187,7 +185,7 @@ function Content() {
                   Choose Test Recipient
                 </label>
               </div>
-              <div className="grid gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 {testEmails.map((email) => (
                   <label
                     key={email}
@@ -204,6 +202,9 @@ function Content() {
                       className="w-5 h-5 text-blue-600 focus:ring-blue-500"
                     />
                     <div className="flex items-center gap-2">
+                      <span className="font-medium text-slate-700 dark:text-slate-300">
+                        {email}
+                      </span>
                       <span className="text-lg">
                         {email.includes("delivered")
                           ? "✅"
@@ -213,44 +214,26 @@ function Content() {
                               ? "⚠️"
                               : "👋"}
                       </span>
-                      <span className="font-medium text-slate-700 dark:text-slate-300">
-                        {email}
-                      </span>
                     </div>
                   </label>
                 ))}
-                <label
-                  key={"custom"}
-                  className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
-                    selectedRecipient === "custom"
-                      ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                      : "border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    checked={
-                      !!selectedRecipient &&
-                      !testEmails.includes(selectedRecipient)
-                    }
-                    // onChange={() => setSelectedRecipient("custom")}
-                    className="w-5 h-5 text-blue-600 focus:ring-blue-500"
-                  />
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">📧</span>
-                    <input
-                      type="text"
-                      value={selectedRecipient}
-                      onChange={(e) => setSelectedRecipient(e.target.value)}
-                      placeholder="email@your-verified-domain.com"
-                      className="w-full bg-slate-50 dark:bg-slate-700 text-slate-900 dark:text-slate-100 rounded-xl p-4 border-2 border-slate-200 dark:border-slate-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-lg"
-                    />
-                    <span className="font-medium text-slate-700 dark:text-slate-300">
-                      An email address for your verified domain on Resend
-                    </span>
-                  </div>
+              </div>
+            </div>
+            {/* To Field */}
+            <div className="mb-6">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-xl">📝</span>
+                <label className="text-lg font-semibold text-slate-700 dark:text-slate-300">
+                  To
                 </label>
               </div>
+              <input
+                type="text"
+                value={selectedRecipient}
+                onChange={(e) => setSelectedRecipient(e.target.value)}
+                placeholder="email@your-verified-domain.com"
+                className="w-full bg-slate-50 dark:bg-slate-700 text-slate-900 dark:text-slate-100 rounded-xl p-4 border-2 border-slate-200 dark:border-slate-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-lg"
+              />
             </div>
 
             {/* Subject Field */}
@@ -283,7 +266,7 @@ function Content() {
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Write your email message here..."
-                rows={6}
+                rows={2}
                 className="w-full bg-slate-50 dark:bg-slate-700 text-slate-900 dark:text-slate-100 rounded-xl p-4 border-2 border-slate-200 dark:border-slate-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-lg resize-none"
                 required
               />
@@ -381,43 +364,45 @@ function Content() {
                           className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium ${
                             !email.status
                               ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
-                              : email.status.complained
+                              : email.complained
                                 ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300"
-                                : email.status.opened
+                                : email.opened
                                   ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
-                                  : email.status.errorMessage
-                                    ? "bg-purple-100 text-red-800 dark:bg-purple-900/30 dark:text-purple-300"
-                                    : email.status.status === "delivered"
-                                      ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
-                                      : email.status.status === "bounced"
-                                        ? "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
+                                  : email.status === "delivered"
+                                    ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
+                                    : email.status === "bounced"
+                                      ? "bg-red-50 text-red-800 dark:bg-red-900/30 dark:text-red-300"
+                                      : email.errorMessage
+                                        ? "bg-purple-100 text-red-800 dark:bg-purple-900/30 dark:text-purple-300"
                                         : "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300"
                           }`}
                         >
                           <span className="text-xs">
                             {!email.status
                               ? "🗑️"
-                              : email.status.complained
-                                ? "⚠️"
-                                : email.status.opened
+                              : email.complained
+                                ? "🤬"
+                                : email.opened
                                   ? "👀"
-                                  : email.status.errorMessage
-                                    ? "❌"
-                                    : email.status.status === "delivered"
-                                      ? "✅"
-                                      : email.status.status === "bounced"
+                                  : email.status === "delivered"
+                                    ? "✅"
+                                    : email.status === "bounced"
+                                      ? "👻"
+                                      : email.errorMessage
                                         ? "❌"
                                         : "⏳"}
                           </span>
                           {!email.status
                             ? "Email missing"
-                            : email.status.complained
+                            : email.complained
                               ? "delivered (but complained)"
-                              : email.status.opened
+                              : email.opened
                                 ? "opened"
-                                : email.status.errorMessage
-                                  ? "error"
-                                  : email.status.status}
+                                : email.status === "bounced"
+                                  ? "bounced"
+                                  : email.errorMessage
+                                    ? "error"
+                                    : email.status}
                         </span>
                       </div>
                     </div>

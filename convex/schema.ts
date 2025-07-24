@@ -11,7 +11,5 @@ export default defineSchema({
   emails: defineTable({
     userId: v.id("users"),
     emailId: vEmailId,
-    subject: v.string(),
-    to: v.string(),
   }).index("userId", ["userId"]),
 });
